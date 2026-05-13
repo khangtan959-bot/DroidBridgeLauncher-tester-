@@ -1,7 +1,6 @@
 name: Manual Android Build
 
 on:
-  # Thêm sự kiện này để tạo nút "Run workflow"
   workflow_dispatch:
     inputs:
       build_type:
@@ -26,23 +25,28 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: gradle
+
+      # BƯỚC QUAN TRỌNG: Ép sử dụng Gradle 8.7 để không bị lỗi với Gradle 9.0-milestone
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.7'
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        # Sử dụng biến input từ người dùng để quyết định câu lệnh build
         run: |
           if [ "${{ github.event.inputs.build_type }}" == "debug" ]; then
-            ./gradlew assembleDebug
+            ./gradlew assembleDebug --stacktrace
           else
-            ./gradlew assembleRelease
+            ./gradlew assembleRelease --stacktrace
           fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-${{ github.event.inputs.build_type }}
-          # Path này sẽ tự động lấy file tương ứng với lựa chọn
+          name: ZalithLauncher-${{ github.event.inputs.build_type }}
+          # LƯU Ý: Nếu ở settings.gradle.kts bạn để include(":app"), thì path dưới đây để nguyên là app/build/... 
+          # NẾU thư mục của bạn thực sự tên là ZalithLauncher, đổi chữ app ở dưới thành ZalithLauncher
           path: app/build/outputs/apk/${{ github.event.inputs.build_type }}/**/*.apk
