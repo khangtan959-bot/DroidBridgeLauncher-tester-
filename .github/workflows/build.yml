@@ -1,10 +1,17 @@
-name: Build Android APK
+name: Manual Android Build
 
 on:
-  push:
-    branches: [ "main" ] # Hoặc branch bạn muốn kích hoạt build
-  pull_request:
-    branches: [ "main" ]
+  # Thêm sự kiện này để tạo nút "Run workflow"
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Chọn kiểu build (Debug hoặc Release)'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
 
 jobs:
   build:
@@ -25,10 +32,17 @@ jobs:
         run: chmod +x gradlew
 
       - name: Build with Gradle
-        run: ./gradlew assembleDebug
+        # Sử dụng biến input từ người dùng để quyết định câu lệnh build
+        run: |
+          if [ "${{ github.event.inputs.build_type }}" == "debug" ]; then
+            ./gradlew assembleDebug
+          else
+            ./gradlew assembleRelease
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-debug
-          path: app/build/outputs/apk/debug/app-debug.apk
+          name: app-${{ github.event.inputs.build_type }}
+          # Path này sẽ tự động lấy file tương ứng với lựa chọn
+          path: app/build/outputs/apk/${{ github.event.inputs.build_type }}/**/*.apk
