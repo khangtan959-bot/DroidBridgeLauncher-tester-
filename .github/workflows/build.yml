@@ -26,7 +26,7 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      # BƯỚC QUAN TRỌNG: Ép sử dụng Gradle 8.7 để không bị lỗi với Gradle 9.0-milestone
+      # Ép sử dụng Gradle 8.7 ổn định
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
@@ -35,18 +35,15 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Build with Gradle
+      # FORCE BUILD: Gradle sẽ tự tìm tất cả các task khả dụng và build
+      - name: Force Build with Gradle
         run: |
-          if [ "${{ github.event.inputs.build_type }}" == "debug" ]; then
-            ./gradlew assembleDebug --stacktrace
-          else
-            ./gradlew assembleRelease --stacktrace
-          fi
+          echo "Bắt đầu quét và Build toàn bộ dự án..."
+          ./gradlew build --stacktrace
 
+      # AUTO UPLOAD: Tự động gom mọi file APK được tạo ra ở bất cứ thư mục nào
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: ZalithLauncher-${{ github.event.inputs.build_type }}
-          # LƯU Ý: Nếu ở settings.gradle.kts bạn để include(":app"), thì path dưới đây để nguyên là app/build/... 
-          # NẾU thư mục của bạn thực sự tên là ZalithLauncher, đổi chữ app ở dưới thành ZalithLauncher
-          path: app/build/outputs/apk/${{ github.event.inputs.build_type }}/**/*.apk
+          name: ZalithLauncher-ForceBuild-APKs
+          path: '**/build/**/*.apk'
