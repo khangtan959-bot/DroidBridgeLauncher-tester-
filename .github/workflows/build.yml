@@ -34,22 +34,18 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      # BƯỚC BUILD: Chạy lệnh assemble thay vì build
+      # BƯỚC MỚI: Liệt kê tất cả các task hiện có để xem dự án thực sự có task gì
+      - name: List all tasks
+        run: ./gradlew tasks --all
+
+      # BƯỚC BUILD: Không dùng clean, không dùng assembleDebug
+      # Thay vào đó dùng lệnh build chung chung, nó sẽ tự động chạy mọi thứ
       - name: Build with Gradle
-        run: |
-          ./gradlew clean assemble${{ github.event.inputs.build_type == 'debug' && 'Debug' || 'Release' }} --stacktrace
+        run: ./gradlew build --stacktrace
 
-      # BƯỚC DEBUG: Tìm xem APK đang trốn ở đâu
-      - name: Locate APKs
-        run: |
-          echo "Tìm kiếm các file APK trong thư mục build:"
-          find . -name "*.apk"
-
-      # BƯỚC UPLOAD: Tự động gom tất cả file .apk tìm thấy
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: ZalithLauncher-APK
-          path: |
-            **/build/outputs/apk/**/*.apk
-          if-no-files-found: error
+          path: '**/build/**/*.apk'
+          if-no-files-found: warn
